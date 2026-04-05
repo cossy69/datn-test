@@ -10,12 +10,12 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-    #map {
-        height: 500px;
-        width: 100%;
-        border-radius: 12px;
-        z-index: 1;
-    }
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 12px;
+            z-index: 1;
+        }
     </style>
 </head>
 
@@ -52,85 +52,85 @@
     </div>
 
     <script>
-    let map = L.map('map').setView([16.0544, 108.2022], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+        let map = L.map('map').setView([16.0544, 108.2022], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
-    let markers = [];
+        let markers = [];
 
-    async function generateTrip() {
-        const dest = document.getElementById('destination').value;
-        if (!dest) return alert('Nhập điểm đến đã ông ơi!');
+        async function generateTrip() {
+            const dest = document.getElementById('destination').value;
+            if (!dest) return alert('Nhập điểm đến đã ông ơi!');
 
-        // Hiển thị trạng thái loading
-        document.getElementById('loading').classList.remove('hidden');
-        document.getElementById('btn-submit').disabled = true;
+            // Hiển thị trạng thái loading
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('btn-submit').disabled = true;
 
-        try {
-            const response = await fetch('/api/test-ai', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                        'content')
-                },
-                body: JSON.stringify({
-                    destination: dest
-                })
-            });
+            try {
+                const response = await fetch('/generate-trip', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content')
+                    },
+                    body: JSON.stringify({
+                        destination: dest
+                    })
+                });
 
-            const result = await response.json();
-            renderTrip(result.data);
-        } catch (error) {
-            console.error(error);
-            alert('Có lỗi rồi, check console log nhé!');
-        } finally {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('btn-submit').disabled = false;
+                const result = await response.json();
+                renderTrip(result.data);
+            } catch (error) {
+                console.error(error);
+                alert('Có lỗi rồi, check console log nhé!');
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('btn-submit').disabled = false;
+            }
         }
-    }
 
-    function renderTrip(data) {
-        // 1. Xóa các Marker cũ trên bản đồ
-        markers.forEach(m => map.removeLayer(m));
-        markers = [];
+        function renderTrip(data) {
+            // 1. Xóa các Marker cũ trên bản đồ
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
 
-        const itineraryDiv = document.getElementById('itinerary-result');
-        const listDiv = document.getElementById('list-items');
-        itineraryDiv.classList.remove('hidden');
-        listDiv.innerHTML = '';
+            const itineraryDiv = document.getElementById('itinerary-result');
+            const listDiv = document.getElementById('list-items');
+            itineraryDiv.classList.remove('hidden');
+            listDiv.innerHTML = '';
 
-        let firstCoords = null;
+            let firstCoords = null;
 
-        data.days.forEach(day => {
-            let dayHtml =
-                `<div class="mb-6"><h3 class="font-bold text-blue-500 text-lg">Ngày ${day.day_index}</h3>`;
+            data.days.forEach(day => {
+                let dayHtml =
+                    `<div class="mb-6"><h3 class="font-bold text-blue-500 text-lg">Ngày ${day.day_index}</h3>`;
 
-            day.items.forEach(item => {
-                const loc = item.location;
-                if (!firstCoords) firstCoords = [loc.lat, loc.lng];
+                day.items.forEach(item => {
+                    const loc = item.location;
+                    if (!firstCoords) firstCoords = [loc.lat, loc.lng];
 
-                // Thêm Marker vào bản đồ
-                let marker = L.marker([loc.lat, loc.lng])
-                    .addTo(map)
-                    .bindPopup(`<b>${loc.name}</b><br>${item.start_time} - ${item.end_time}`);
-                markers.push(marker);
+                    // Thêm Marker vào bản đồ
+                    let marker = L.marker([loc.lat, loc.lng])
+                        .addTo(map)
+                        .bindPopup(`<b>${loc.name}</b><br>${item.start_time} - ${item.end_time}`);
+                    markers.push(marker);
 
-                dayHtml += `
+                    dayHtml += `
                         <div class="ml-4 p-2 border-l-2 border-gray-200 mt-2">
                             <span class="text-sm font-semibold text-gray-500">${item.start_time} - ${item.end_time}</span>
                             <p class="font-medium">${loc.name}</p>
                         </div>
                     `;
+                });
+                dayHtml += `</div>`;
+                listDiv.innerHTML += dayHtml;
             });
-            dayHtml += `</div>`;
-            listDiv.innerHTML += dayHtml;
-        });
 
-        // 2. Di chuyển tâm bản đồ tới điểm đầu tiên
-        if (firstCoords) map.setView(firstCoords, 12);
-    }
+            // 2. Di chuyển tâm bản đồ tới điểm đầu tiên
+            if (firstCoords) map.setView(firstCoords, 12);
+        }
     </script>
 </body>
 

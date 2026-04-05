@@ -1,0 +1,11 @@
+<?php
+
+namespace App\Models;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class UserTravelProfile extends Model
+{
+    protected $fillable = ['user_id', 'dietary_restrictions', 'preferred_transportation', 'mobility_needs'];
+    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+}
